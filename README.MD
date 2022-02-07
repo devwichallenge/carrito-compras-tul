@@ -10,7 +10,7 @@ La aplicacion se encuentra empaquedata en un .jar, debe ubicarse en la raiz del 
 
 java -jar demo-0.0.1-SNAPSHOT.jar   
 
-# Enpoint de items
+# Endpoint de items
 Method: POST
 
 URL: http://localhost:8080/shopping/
