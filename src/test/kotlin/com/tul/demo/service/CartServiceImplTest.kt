@@ -10,26 +10,34 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import java.util.*
 
-
-class CartServiceImplTest : TestExtensions() {
+//should be create a abstract class
+open class CartServiceImplTest : TestExtensions() {
 
     companion object{
         private val staticUuId: UUID = UUID.fromString("bcc68d33-4f69-4f06-88fd-0bc6dcba048f")
         private val otherUUID: UUID = UUID.fromString("be7e9a6c-9b80-42c2-bbc4-51411f13a03e")
     }
 
+    private val anyItem = Item(
+        id = otherUUID ,name = "name01", sku = "sku", itemWithDiscount = false, price = 100.0, amount = 1)
+    private val anyItem2 = Item(
+        id = staticUuId, name = "name02", sku = "sku2", itemWithDiscount = true, price = 100.1, amount = 1)
+
+    val listOfItems = mutableListOf(anyItem, anyItem2)
+
     private val repository: CartRepository = Mockito.mock(CartRepository::class.java)
+
+    private var itemDiscount =  Mockito.mock(ItemDiscountImpl::class.java)
 
     private lateinit var sut: CartServiceImpl //system under test
 
     @BeforeEach
     fun initUseCase(){
-        sut = CartServiceImpl(repository)
+        sut = CartServiceImpl(repository, itemDiscount)
         // init values for use on the tests context
-        val anyItem = Item(id = otherUUID ,name = "name01", sku = "sku", itemWithDiscount = false, price = 100.0, amount = 1)
-        val anyItem2 = Item(id = staticUuId, name = "name02", sku = "sku2", itemWithDiscount = true, price = 100.1, amount = 1)
-        val listOfItems = mutableListOf(anyItem, anyItem2)
         val initCart = Cart(items = listOfItems)
+        Mockito.`when`(itemDiscount.totalWithDiscount(listOfItems)).thenReturn(50.05)
+        Mockito.`when`(itemDiscount.totalWithOutDiscount(listOfItems)).thenReturn(100.0)
         Mockito.`when`(repository.findById(staticUuId)).thenReturn(Optional.of(initCart))
         Mockito.`when`(repository.save(initCart)).thenReturn(initCart)
     }

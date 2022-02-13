@@ -9,11 +9,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class CartServiceImpl(@Autowired val cartRepository: CartRepository): CartService {
-
-    companion object{
-        var divider: Int = 2
-    }
+class CartServiceImpl(@Autowired val cartRepository: CartRepository, @Autowired val itemDiscount: ItemDiscount): CartService {
 
     override fun itemsByCart(id: UUID): MutableList<Item> = cartRepository.findById(id).map(Cart::items).get()
 
@@ -45,22 +41,13 @@ class CartServiceImpl(@Autowired val cartRepository: CartRepository): CartServic
         }
     }
 
-    /*esto deberia estar definido en una interfaz aparte donde pueda manejar los tipos de descuento en una implementacion
-    especifica. Asi tengo implementaciones concretas por tipo de descuento ejemplo: Descuento por cupon
-    descuento por empleado etc...
-     */
-
     override fun checkoutPayment(id: UUID): VerifyPaymentResponse {
-        with(cartRepository.findById(id).get()){
-            val finalAmountOperation =
-                this.items.filter { it.itemWithDiscount }
-                    .sumOf { itemWithDiscount -> (itemWithDiscount.price.times(itemWithDiscount.amount)).div(divider)}
-                .plus(
-                    this.items.filterNot{it.itemWithDiscount}
-                        .sumOf { itemWithOutDiscount -> itemWithOutDiscount.price.times(itemWithOutDiscount.amount)})
+        with(cartRepository.findById(id).get()) {
             this.state = State.COMPLETED
             cartRepository.save(this)
-            return  VerifyPaymentResponse(finalAmountOperation)
+            return VerifyPaymentResponse(
+                itemDiscount.totalWithDiscount(this.items).plus(itemDiscount.totalWithOutDiscount(this.items))
+            )
         }
     }
 }
